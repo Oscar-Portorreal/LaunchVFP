@@ -2,11 +2,6 @@ Public lcMensajeMant, lcImgMant, lcRutaSis, lnTiempoMant,pcLocalApp
 Public loShell  As Object
 lnNewVer =0
 lnCurVer=0
-lcMessaError=""
-lcErr=""
-
-lFileExist=.T.
-
 Set Step On
 _Screen.Visible=.F.
 lcRutaSis = Addbs(Justpath(Sys(16,1)))
@@ -36,152 +31,102 @@ If llAcceso
 		=Agetfileversion(aNewVer,lcExeRemoteApp)
 		lnNewVer=aNewVer[4]
 
-
-		If File(lcLocalApp)&&Existe el Eikonw.exe ?
-
-			=Agetfileversion(aCurVer,lcLocalApp)
-			lnCurVer=aCurVer[4]
+		=Agetfileversion(aCurVer,lcLocalApp)
+		lnCurVer=aCurVer[4]
 
 
 
+		If (lnNewVer > lnCurVer)
+
+			Try
+				&&Renombrar y Copiar
+				lcMainApp=Justfname(lcLocalApp)
+
+				If(IsExeRunning(lcMainApp))
+					IsExeRunning(lcMainApp,.T.)
+				Endif
+
+
+				Set Step On
+				lcTimeStamp=GetTimeStamp(Datetime(),1)
+				lcTimeStamp=lcTimeStamp+".exe"
+				Rename (Fullpath(lcLocalApp)) To (lcLocalApp+"_"+lcTimeStamp)
 
 
 
-			If (lnNewVer > lnCurVer)
 
+				* Set the source and destination file paths
+				lcSourceFile =  lcExeRemoteApp  && Replace with your source file path
+				lcDestFolder = lcLocalFolder  && Replace with your destination folder path
 
-				Try
-					&&Renombrar y Copiar
-					lcMainApp=Justfname(lcLocalApp)
+				* Get the source file's folder
+				loSourceFolder = loShell.Namespace(Addbs(Justpath(lcSourceFile)))
 
-					If(IsExeRunning(lcMainApp))
-						IsExeRunning(lcMainApp,.T.)
-					Endif
+				* Get the source file
+				loSourceFile = loSourceFolder.ParseName(Justfname(lcSourceFile))
 
-
-					Set Step On
-					lcTimeStamp=GetTimeStamp(Datetime(),1)
-					lcTimeStamp=lcTimeStamp+".exe"
-
-					lnNewlcLocalApp=lcLocalApp+"_"+lcTimeStamp
-
-					If File(lnNewlcLocalApp)
-						lnNewlcLocalApp=lnNewlcLocalApp+Sys(2015)+".exe"
-					Endif
-
-					Rename (Fullpath(lcLocalApp)) To (lnNewlcLocalApp)
+				* Get the destination folder
+				loDestFolder = loShell.Namespace(lcDestFolder)
+					
+					
+				* Copy the file to the destination folder
+				loDestFolder.CopyHere(loSourceFile)
 
 
 
-					* Set the source and destination file paths
-					lcSourceFile =  lcExeRemoteApp  && Replace with your source file path
-					lcDestFolder =  lcLocalFolder  && Replace with your destination folder path
 
-					* Get the source file's folder
-					loSourceFolder = loShell.Namespace(Addbs(Justpath(lcSourceFile)))
+				bHaveError=.T.
+				Do Case
+					Case oException.ErrorNo=3
+						Close Databases
+						lcMessaError="El Archivo " + Upper(lcDbc) + "Esta abierto. Por Favor cerrar con el comando CLOSE DATABASE."+Chr(13)+Chr(10)+"Detalle del Error :"+Chr(10)
 
-					* Get the source file
-					loSourceFile = loSourceFolder.ParseName(Justfname(lcSourceFile))
+						lcErr=lcMessaError+lcErr
+						Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
 
-					* Get the destination folder
-					loDestFolder = loShell.Namespace(lcDestFolder)
-
-					Do Form frmprogress.scx
+					Case oException.ErrorNo=1705
+						lcMessaError="El Archivo " + Upper(lcDbc) + "Esta abierto. Por Favor cerrar con el comando CLOSE DATABASE."+Chr(13)+Chr(10)+"Detalle del Error :"+Chr(10)
 
 
-					* Copy the file to the destination folder
-					loDestFolder.CopyHere(loSourceFile)
+						lcErr=lcMessaError+lcErr
+						Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
 
 
-				Catch To oException
+					Case oException.ErrorNo=1429
 
-					bHaveError=.T.
-					Do Case
-						Case oException.ErrorNo=3
-							Close Databases
-							lcMessaError="El Archivo " + Upper(lcDbc) + "Esta abierto. Por Favor cerrar con el comando CLOSE DATABASE."+Chr(13)+Chr(10)+"Detalle del Error :"+Chr(10)
-
-							lcErr=lcMessaError+lcErr
-							Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
-
-						Case oException.ErrorNo=1705
-							lcMessaError="El Archivo " + Upper(lcDbc) + "Esta abierto. Por Favor cerrar con el comando CLOSE DATABASE."+Chr(13)+Chr(10)+"Detalle del Error :"+Chr(10)
+						Messagebox("Anomalia al Intentar Cerrar la Aplicacion", 16 , "Anomila EikonLauncher")
 
 
-							lcErr=lcMessaError+lcErr
-							Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
+						lcErr=[Program con Error : ] + Upper(oException.Procedure)+Chr(13)+;
+							[Error: ] + Str(oException.ErrorNo) + Chr(13) + ;
+							[Linea: ] + Str(oException.Lineno) + Chr(13) + ;
+							[Mensaje: ] + oException.Message
 
-
-						Case oException.ErrorNo=1429
-
-							Messagebox("Anomalia al Intentar Cerrar la Aplicacion", 16 , "Anomila EikonLauncher")
-
-
-							lcErr=[Program con Error : ] + Upper(oException.Procedure)+Chr(13)+;
-								[Error: ] + Str(oException.ErrorNo) + Chr(13) + ;
-								[Linea: ] + Str(oException.Lineno) + Chr(13) + ;
-								[Mensaje: ] + oException.Message
-
-							lcErr=lcMessaError+lcErr
-							Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
+						lcErr=lcMessaError+lcErr
+						Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
 
 
 
-						Otherwise
-							lcErr  =[Program con Error : ] + Upper(oException.Procedure)+Chr(13)+;
-								[Error: ] + Str(oException.ErrorNo) + Chr(13) + ;
-								[Linea: ] + Str(oException.Lineno) + Chr(13) + ;
-								[Mensaje: ] + oException.Message
+					Otherwise
+						lcErr  =[Program con Error : ] + Upper(oException.Procedure)+Chr(13)+;
+							[Error: ] + Str(oException.ErrorNo) + Chr(13) + ;
+							[Linea: ] + Str(oException.Lineno) + Chr(13) + ;
+							[Mensaje: ] + oException.Message
 
-							lcErr=lcMessaError+lcErr
-							Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
+						lcErr=lcMessaError+lcErr
+						Messagebox(lcErr, 16 , "Error en el Proceso de Carga.")
 
-					Endcase
-				Finally
+				Endcase
+			Finally
 
-					If Vartype(oProgress)="O"
-						oProgress.Release()
-					Endif
+			Endtry
 
-				Endtry
-
-
-
-			Endif
-
-			*TODO : Agregar TryCatch
-		Else &&  Si eno existe lo copia desde la ruta remota File(lcLocalApp)
-
-
-			* Set the source and destination file paths
-			lcSourceFile =  lcExeRemoteApp  && Replace with your source file path
-			lcDestFolder =  lcLocalFolder  && Replace with your destination folder path
-
-			* Get the source file's folder
-			loSourceFolder = loShell.Namespace(Addbs(Justpath(lcSourceFile)))
-
-			* Get the source file
-			loSourceFile = loSourceFolder.ParseName(Justfname(lcSourceFile))
-
-			* Get the destination folder
-			loDestFolder = loShell.Namespace(lcDestFolder)
-
-			Do Form frmprogress.scx
-
-			* Copy the file to the destination folder
-			loDestFolder.CopyHere(loSourceFile)
-			oProgress.Release()
 
 
 		Endif
 
-
-
-
-
-
 	Endif
-	*	oProgress.Visible=.F.
+
 	IngresoSistema(Fullpath(lcLocalApp))
 Else
 
@@ -191,12 +136,19 @@ Else
 	FormMantenimiento()
 Endif
 
+*!*	Else
+*!*		=Messagebox("No es Posible Acceder a la Aplicacion en este Momento [ " + Fullpath(lcExeRemote)+" ]",0+48,"EikonLauncher - Advertencia")
+*!*		Return
+*!*	Endif
 
+*!*	Else
 
+*!*		lcMensajeMant = LeeIni(lcRutaSis+"configlaunch.ini","Mantenimiento","MensajeMant")
+*!*		lcImgMant = LeeIni(lcRutaSis+"configlaunch.ini","Mantenimiento","ImgMant")
 
+*!*		FormMantenimiento()
 
-
-
+*!*	Endif
 
 *--------------------------------------------------------------------------------
 *Nombre		         : LeeIni()
